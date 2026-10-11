@@ -1,0 +1,563 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Chatbot</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #dbeafe, #ede9fe);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 430px;
+      height: 650px;
+      max-height: 90vh;
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Header */
+    .chat-header {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .bot-avatar {
+      width: 45px;
+      height: 45px;
+      background: white;
+      color: #4f46e5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 25px;
+    }
+
+    .header-info {
+      flex: 1;
+    }
+
+    .header-info h2 {
+      font-size: 19px;
+      margin-bottom: 5px;
+    }
+
+    .header-info p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .clear-btn {
+      border: 1px solid rgba(255,255,255,0.5);
+      color: white;
+      background: transparent;
+      border-radius: 8px;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .clear-btn:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    /* Messages */
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .message {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      max-width: 90%;
+      animation: appear 0.25s ease;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .message.bot {
+      align-self: flex-start;
+    }
+
+    .message-avatar {
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      background: #e0e7ff;
+    }
+
+    .user .message-avatar {
+      background: #ede9fe;
+    }
+
+    .message-content {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .bubble {
+      padding: 12px 15px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    .bot .bubble {
+      background: white;
+      color: #1e293b;
+      border: 1px solid #e2e8f0;
+      border-bottom-left-radius: 4px;
+    }
+
+    .user .bubble {
+      background: #4f46e5;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .time {
+      font-size: 10px;
+      color: #94a3b8;
+      padding: 0 4px;
+    }
+
+    .user .time {
+      text-align: right;
+    }
+
+    /* Quick replies */
+    .quick-replies {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 0 16px 12px;
+      background: #f8fafc;
+    }
+
+    .quick-btn {
+      background: white;
+      border: 1px solid #c7d2fe;
+      color: #4f46e5;
+      border-radius: 20px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.2s;
+    }
+
+    .quick-btn:hover {
+      background: #eef2ff;
+    }
+
+    /* Typing indicator */
+    .typing {
+      display: none;
+      align-self: flex-start;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 15px;
+      padding: 12px 15px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .typing span {
+      display: inline-block;
+      animation: bounce 1s infinite;
+    }
+
+    .typing span:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    .typing span:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    /* Input area */
+    .chat-input-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 15px;
+      border-top: 1px solid #e2e8f0;
+      background: white;
+    }
+
+    #user-input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid #cbd5e1;
+      outline: none;
+      border-radius: 25px;
+      padding: 13px 16px;
+      font-size: 14px;
+    }
+
+    #user-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    #send-btn {
+      width: 46px;
+      height: 46px;
+      border: none;
+      border-radius: 50%;
+      color: white;
+      background: #4f46e5;
+      cursor: pointer;
+      font-size: 19px;
+      transition: 0.2s;
+    }
+
+    #send-btn:hover {
+      background: #3730a3;
+      transform: scale(1.05);
+    }
+
+    #send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    @keyframes appear {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes bounce {
+      0%, 60%, 100% {
+        transform: translateY(0);
+      }
+      30% {
+        transform: translateY(-5px);
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0;
+      }
+
+      .chat-container {
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="chat-container">
+
+    <header class="chat-header">
+      <div class="bot-avatar">🤖</div>
+
+      <div class="header-info">
+        <h2>My Chatbot</h2>
+        <p>● Ready to help you</p>
+      </div>
+
+      <button class="clear-btn" id="clear-btn" title="Clear chat">
+        Clear
+      </button>
+    </header>
+
+    <main class="chat-messages" id="chat-messages"
+          aria-live="polite" aria-label="Chat messages">
+
+      <div class="message bot">
+        <div class="message-avatar">🤖</div>
+        <div class="message-content">
+          <div class="bubble">
+            Hello! 👋 Welcome to My Chatbot!
+
+            I'm here to help you. Ask me a question or choose an option below.
+          </div>
+          <span class="time">Just now</span>
+        </div>
+      </div>
+
+      <div class="typing" id="typing">
+        Typing <span>●</span> <span>●</span> <span>●</span>
+      </div>
+
+    </main>
+
+    <div class="quick-replies">
+      <button class="quick-btn" data-message="Hello">👋 Hello</button>
+      <button class="quick-btn" data-message="What can you do?">💡 Help</button>
+      <button class="quick-btn" data-message="Tell me a joke">😄 Tell a joke</button>
+      <button class="quick-btn" data-message="Who are you?">🤖 About</button>
+    </div>
+
+    <form class="chat-input-area" id="chat-form">
+      <input
+        type="text"
+        id="user-input"
+        placeholder="Type your message..."
+        autocomplete="off"
+        aria-label="Type your message"
+        maxlength="1000"
+        required
+      >
+
+      <button type="submit" id="send-btn" aria-label="Send message">
+        ➤
+      </button>
+    </form>
+
+  </div>
+
+  <script>
+    const chatMessages = document.getElementById("chat-messages");
+    const chatForm = document.getElementById("chat-form");
+    const userInput = document.getElementById("user-input");
+    const sendBtn = document.getElementById("send-btn");
+    const typing = document.getElementById("typing");
+    const clearBtn = document.getElementById("clear-btn");
+    const quickButtons = document.querySelectorAll(".quick-btn");
+
+    let isThinking = false;
+    let replyTimer = null;
+
+    // Add a message to the chat safely.
+    function addMessage(text, sender) {
+      const message = document.createElement("div");
+      message.className = "message " + sender;
+
+      const avatar = document.createElement("div");
+      avatar.className = "message-avatar";
+      avatar.textContent = sender === "bot" ? "🤖" : "🙂";
+
+      const content = document.createElement("div");
+      content.className = "message-content";
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = text;
+
+      const time = document.createElement("span");
+      time.className = "time";
+      time.textContent = new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+
+      content.appendChild(bubble);
+      content.appendChild(time);
+      message.appendChild(avatar);
+      message.appendChild(content);
+
+      chatMessages.insertBefore(message, typing);
+      scrollToBottom();
+    }
+
+    function scrollToBottom() {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Simple rule-based chatbot response engine.
+    function getBotResponse(message) {
+      const text = message.toLowerCase().trim();
+
+      if (/^(hi|hello|hey|hii|good morning|good afternoon|good evening)\b/.test(text)) {
+        return "Hello! 😊 It's great to chat with you. What would you like to know?";
+      }
+
+      if (text.includes("how are you")) {
+        return "I'm doing great, thank you for asking! 🤖 How can I help you today?";
+      }
+
+      if (text.includes("your name") || text.includes("who are you")) {
+        return "I'm My Chatbot, a simple chatbot built using HTML, CSS, and JavaScript!";
+      }
+
+      if (
+        text.includes("what can you do") ||
+        text === "help" ||
+        text.includes("your features")
+      ) {
+        return "I can respond to greetings, answer basic questions, tell jokes, share coding tips, and chat with you.\n\nTry asking me about JavaScript, HTML, CSS, or web development!";
+      }
+
+      if (text.includes("joke")) {
+        const jokes = [
+          "Why do programmers prefer dark mode? Because light attracts bugs! 😂",
+          "Why did the computer go to the doctor? Because it caught a virus! 🤣",
+          "Why do JavaScript developers wear glasses? Because they don't C#! 😄",
+          "What did the HTML say to the CSS? You make me look good! 😎"
+        ];
+
+        return jokes[Math.floor(Math.random() * jokes.length)];
+      }
+
+      if (text.includes("javascript") || text.includes(" js ")) {
+        return "JavaScript makes websites interactive. You can use it to build chatbots, games, forms, animations, and much more! 🚀";
+      }
+
+      if (text.includes("html")) {
+        return "HTML stands for HyperText Markup Language. It provides the structure of a webpage using elements such as headings, paragraphs, buttons, and forms.";
+      }
+
+      if (text.includes("css")) {
+        return "CSS stands for Cascading Style Sheets. It controls the appearance of websites, including colors, layouts, fonts, animations, and responsive design.";
+      }
+
+      if (text.includes("web development") || text.includes("website")) {
+        return "Web development usually involves three main technologies:\n\n🧱 HTML — webpage structure\n🎨 CSS — webpage design\n⚡ JavaScript — interactivity\n\nTogether, they can create amazing websites!";
+      }
+
+      if (text.includes("thank")) {
+        return "You're very welcome! 😊 I'm happy to help.";
+      }
+
+      if (text.includes("bye") || text.includes("goodbye")) {
+        return "Goodbye! 👋 Thanks for chatting with me. Have a wonderful day!";
+      }
+
+      if (text.includes("time")) {
+        return "The current time on your device is " +
+          new Date().toLocaleTimeString() + ". 🕒";
+      }
+
+      if (text.includes("date") || text.includes("today")) {
+        return "Today's date on your device is " +
+          new Date().toLocaleDateString() + ". 📅";
+      }
+
+      if (text.includes("your creator") || text.includes("who made you")) {
+        return "I was created as a demo project using HTML, CSS, and JavaScript. You can customize my code to make me your own!";
+      }
+
+      if (text.includes("love you")) {
+        return "Aww, that's so kind! 💜 I'm always happy to chat and help.";
+      }
+
+      const fallbackResponses = [
+        "That's interesting! 😊 Could you tell me a little more?",
+        "I'm still a simple chatbot, so I don't know everything yet. Try asking me about HTML, CSS, or JavaScript!",
+        "I didn't quite understand that. Could you try asking in a different way?",
+        "I'm here to help! Try typing 'help' to see what I can do.",
+        "Good question! My current version uses predefined responses. You can connect an AI API to make me smarter."
+      ];
+
+      return fallbackResponses[
+        Math.floor(Math.random() * fallbackResponses.length)
+      ];
+    }
+
+    // Process a message and display the reply.
+    function sendMessage(message) {
+      message = message.trim();
+
+      if (!message || isThinking) return;
+
+      addMessage(message, "user");
+      userInput.value = "";
+      isThinking = true;
+      sendBtn.disabled = true;
+      typing.style.display = "block";
+      scrollToBottom();
+
+      const response = getBotResponse(message);
+
+      replyTimer = setTimeout(() => {
+        typing.style.display = "none";
+        addMessage(response, "bot");
+
+        isThinking = false;
+        sendBtn.disabled = false;
+        userInput.focus();
+      }, 600 + Math.random() * 600);
+    }
+
+    // Submit with Enter or the send button.
+    chatForm.addEventListener("submit", function(event) {
+      event.preventDefault();
+      sendMessage(userInput.value);
+    });
+
+    // Quick-reply buttons.
+    quickButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        sendMessage(button.dataset.message);
+      });
+    });
+
+    // Clear conversation.
+    clearBtn.addEventListener("click", () => {
+      clearTimeout(replyTimer);
+      isThinking = false;
+      sendBtn.disabled = false;
+      typing.style.display = "none";
+
+      chatMessages.querySelectorAll(".message").forEach(message => {
+        message.remove();
+      });
+
+      addMessage(
+        "Chat cleared! 🧹 Hello again! What would you like to talk about?",
+        "bot"
+      );
+
+      userInput.focus();
+    });
+
+    userInput.focus();
+  </script>
+
+</body>
+</html>
